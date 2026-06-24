@@ -1,0 +1,9 @@
+# Roblox lock files
+*.lock
+
+# Roblox auto-save backups
+*.rbxl.bak
+
+# OS
+Thumbs.db
+.DS_Store
