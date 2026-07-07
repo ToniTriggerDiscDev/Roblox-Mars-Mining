@@ -57,6 +57,8 @@ eigene Systeme (Artefakt-Identifikation, Sammlungen), bewusste Abweichungen wo s
   (Ad Manager füllt automatisch, Bezahlung pro Impression)
 
 ## Backlog
+- Überhitzungs-Mechanik: Heat pro Dig, passiver Decay (Radiator-Tier erhöht Decay),
+  bei 100% Bohrgeschwindigkeit gedrosselt; Heat-Bar im HUD; evtl. Tiefe erhöht Basis-Heat
 - Sounds (Drill-Loop, Clink bei unbohrbaren Blöcken)
 - Instanzierte Welten pro Spieler
 - grass_top-Look an der Oberfläche überarbeiten; Farn-Deko liest sich als Tanne
