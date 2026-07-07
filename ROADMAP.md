@@ -64,3 +64,20 @@ eigene Systeme (Artefakt-Identifikation, Sammlungen), bewusste Abweichungen wo s
 - grass_top-Look an der Oberfläche überarbeiten; Farn-Deko liest sich als Tanne
 - Echter DataStore-Test nach Publish
 - 20 Platzhalter-Artefaktmodelle durch eigene ersetzen
+
+### Illusionen & Game-Feel (nicht verpflichtend)
+- **Tiefennebel/Vignette**: UI-Gradient-Overlay, Bildschirmrand verdunkelt mit Tiefe
+  (Klaustrophobie)
+- **Fake Beleuchtung**: Lichtkreis um Drill, Nahblöcke per Tint aufhellen (keine echte
+  Lichtberechnung)
+- **Ore-Schimmer**: wertvolle Erze pulsieren subtil erst bei Pod-Nähe ("Spürsinn"-Illusion)
+- **Pity Timer**: nach X Blöcken ohne seltenen Fund → Drop-Rate heimlich erhöhen
+  (Erze sind vorplatziert; Umsetzung z.B. über nachträgliches Upgrade benachbarter Blöcke
+  oder versteckte Bonus-Drops)
+- **Erz-Adern**: Ore-Platzierung nicht rein zufällig, diagonale Pfade nach unten →
+  Spieler folgt instinktiv tiefer = mehr Risiko/Spannung
+- **Erste Bohrung = gut**: erste 3–5 Blöcke nach Spawn garantiert Erz, kein leerer Start
+- **Cargo-Gewicht spürbar**: Pod neigt sich leicht, Thruster-Flammen größer bei vollem
+  Cargo; evtl. leichte Gameplay-Trägheit (spürbar aber nicht frustrierend)
+- **Hintergrund-Details mit Tiefe**: Fossilien, Knochen, alte Strukturen in der
+  Hintergrundwand ab bestimmten Tiefen (Atmosphäre + Lore)
