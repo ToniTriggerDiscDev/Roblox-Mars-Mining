@@ -69,9 +69,16 @@ def slide(f0, f1, dur, curve=1.0):
     return f0 + (f1 - f0) * np.linspace(0, 1, n) ** curve
 
 
-def save(name, x, gain=0.8):
+def drive(x, amount=2.2):
+    """soft-clip saturation: the sfxr crunch"""
+    return np.tanh(x * amount) / np.tanh(amount)
+
+
+def save(name, x, gain=0.95, punch=2.2):
     OUT.mkdir(parents=True, exist_ok=True)
-    x = np.clip(x * gain / (np.max(np.abs(x)) + 1e-9), -1, 1)
+    x = x / (np.max(np.abs(x)) + 1e-9)
+    x = drive(x, punch)
+    x = np.clip(x * gain, -1, 1)
     data = (x * 32767).astype(np.int16)
     with wave.open(str(OUT / f"{name}.wav"), "wb") as w:
         w.setnchannels(1)
@@ -84,11 +91,11 @@ def save(name, x, gain=0.8):
 # === sounds ===
 
 def dig_pop():
-    """block breaks: short noise burst, pitch-down thump underneath"""
-    d = 0.14
-    n = noise(d) * env(len(t(d)), 0.001, 0.12)
-    th = square(slide(220, 70, d), d) * env(len(t(d)), 0.001, 0.1)
-    return lowpass(n * 0.7 + th * 0.6, 2600)
+    """block breaks: crunchy crack + pitch-down thump"""
+    d = 0.13
+    n = noise(d) * env(len(t(d)), 0.0005, 0.09)
+    th = square(slide(300, 75, d, curve=0.6), d) * env(len(t(d)), 0.0005, 0.1)
+    return lowpass(n * 1.0 + th * 0.8, 3400)
 
 
 def ore_pickup():
@@ -105,11 +112,12 @@ def money_tick():
 
 
 def cargo_full_punch():
-    """low square punch + noise slap (matches the clean slam)"""
-    d = 0.3
-    p = square(slide(160, 55, d), d) * env(int(SR * d), 0.001, 0.26)
-    sl = noise(d) * env(int(SR * d), 0.001, 0.05)
-    return lowpass(p * 0.9 + sl * 0.5, 1800)
+    """hard slam: mid punch + slap, carries on small speakers"""
+    d = 0.32
+    p = square(slide(240, 70, d, curve=0.5), d) * env(int(SR * d), 0.0005, 0.28)
+    sl = noise(d) * env(int(SR * d), 0.0005, 0.06)
+    sub = sine(slide(110, 50, d), d) * env(int(SR * d), 0.0005, 0.24)
+    return lowpass(p * 1.0 + sl * 0.8 + sub * 0.6, 2600)
 
 
 def zone_sweep():
@@ -154,11 +162,12 @@ def drill_clink():
 
 
 def hurt_thud():
-    """fall damage: dull low thud"""
-    d = 0.22
-    x = sine(slide(140, 48, d), d) * env(int(SR * d), 0.001, 0.2)
-    n = lowpass(noise(d), 500) * env(int(SR * d), 0.001, 0.06)
-    return x * 0.9 + n * 0.6
+    """fall damage: hard knock — mid-freq body so it carries on small speakers"""
+    d = 0.24
+    knock = square(slide(310, 90, d, curve=0.5), d) * env(int(SR * d), 0.0005, 0.16)
+    body = sine(slide(180, 55, d), d) * env(int(SR * d), 0.0005, 0.2)
+    crack = noise(d) * env(int(SR * d), 0.0005, 0.035)
+    return lowpass(knock * 0.9 + body * 0.8 + crack * 0.9, 2200)
 
 
 def fuel_warning():
@@ -179,7 +188,31 @@ def identify_reveal():
     return np.concatenate(seg + [tail * vib]) * 0.8
 
 
+def drill_loop():
+    """seamless 2s grinding loop: filtered noise + motor chatter + rumble.
+    Played as a looped Sound while digging (DigState), NOT per block."""
+    d = 2.0
+    n = int(SR * d)
+    rng = np.random.default_rng(9)
+    x = rng.uniform(-1, 1, n)
+    x = lowpass(x, 1400)
+    # motor chatter: 28 Hz square amplitude mod (integer cycles in 2s -> seamless)
+    chatter = 0.72 + 0.28 * np.sign(np.sin(2 * np.pi * 28 * t(d)))
+    # slow grind wobble (2 Hz, integer cycles)
+    wobble = 1 + 0.12 * np.sin(2 * np.pi * 2 * t(d))
+    x = x * chatter * wobble
+    # rumble: 62 Hz (integer cycles) + gear whine 124 Hz
+    x += 0.5 * np.sin(2 * np.pi * 62 * t(d)) + 0.15 * np.sin(2 * np.pi * 124 * t(d))
+    # crossfade ends for a click-free loop
+    f = int(SR * 0.08)
+    fade = np.linspace(0, 1, f)
+    x[:f] = x[:f] * fade + x[-f:] * (1 - fade)
+    x = x[:n - f]
+    return x
+
+
 SOUNDS = {
+    "drill_loop": drill_loop,
     "dig_pop": dig_pop,
     "ore_pickup": ore_pickup,
     "money_tick": money_tick,
