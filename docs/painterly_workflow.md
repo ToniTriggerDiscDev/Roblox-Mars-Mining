@@ -98,14 +98,23 @@ original edges meet in the centre, then heals the centre cross). That's the
 - **Cross-variant seamless** (variant A's edge = variant B's edge) is
   deliberately **not** done: it would force all variants to share identical
   borders, killing the variety we want.
-- **Cross-material** (dirt→rock blend / autotiling / Wang tiles) is a
-  **non-goal**: each block is a discrete cube and hard material edges are
-  *readability* — you should see where rock starts.
+- **Cross-material** (dirt→rock blend / autotiling / Wang tiles) is **not done
+  today, but it's an open aesthetic option, not a readability blocker.**
+  Readability splits into two axes:
+    - *Which ore?* → carried by the **constant ore decal** (recognisable shape
+      per type, tinted per type; deliberately gets **no** tint jitter). Fully
+      independent of the base terrain — which is why the base can be as varied
+      or blended as we like.
+    - *Can I dig it?* → dirt (diggable) vs rock (bomb-only). Carried by the base
+      material's **fill appearance**, not by a hard edge. Soft dirt→rock
+      transitions are fine as long as rock still clearly reads as rock.
+  So hard block edges are the blocky Motherload *look*, not a requirement.
+  Building cross-material blends means autotiling (transition tiles at
+  boundaries) — a real feature with real cost, decided on its own merits.
 
 Because `StudsPerTileU/V = block size`, one tile fills one face and never
-repeats within a block; neighbours are separate cubes with an edge break
-between them. So none of the cross-tile seam problems of a continuous ground
-plane apply here.
+repeats within a block; neighbours are separate cubes. Self-seamless still only
+matters when two same-variant blocks touch.
 
 ---
 
