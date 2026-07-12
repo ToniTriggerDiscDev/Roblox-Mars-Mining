@@ -11,9 +11,9 @@ HEIGHT = 600
 DIG_BASE = 0.4
 BS = 8
 
-ORES = {  # code: (value, weight)
-    6: (30, 1), 7: (60, 1), 8: (100, 1), 9: (250, 2), 10: (750, 3),
-    11: (2000, 4), 12: (5000, 6), 13: (20000, 8), 14: (100000, 10), 15: (500000, 12),
+ORES = {  # code: (value, weight) — gestauchte Kurve (2026-07-12, Option B)
+    6: (30, 1), 7: (60, 1), 8: (100, 1), 9: (250, 2), 10: (700, 3),
+    11: (1500, 4), 12: (3200, 6), 13: (6000, 8), 14: (25000, 10), 15: (120000, 12),
 }
 UPGRADES = {
     # (Kosten pro Tier ab Tier2, Effekte pro Tier ab Tier1)
@@ -157,6 +157,68 @@ def simulate(hours=10.0, verbose=True):
     return timeline
 
 
+def trip_stats(tiers):
+    """(income/min, best_row) für einen gegebenen Tier-Stand."""
+    drill = UPGRADES["Drill"][1][tiers["Drill"] - 1]
+    cargo_cap = UPGRADES["Cargo"][1][min(tiers["Cargo"], len(UPGRADES["Cargo"][1])) - 1]
+    tank = UPGRADES["Fuel"][1][tiers["Fuel"] - 1]
+    engine = UPGRADES["Engine"][1][tiers["Engine"] - 1]
+    best_row = 10
+    for row in range(20, HEIGHT - 12, 10):
+        travel = 2 * (row / engine)
+        v, w = ore_ev(row)
+        blocks = cargo_cap / max(w, 1e-9)
+        digt = blocks * dig_time(row, drill)
+        if travel * FUEL_FLY + digt * FUEL_IDLE <= tank * 0.85:
+            best_row = row
+        else:
+            break
+    v, w = ore_ev(best_row)
+    blocks = cargo_cap / max(w, 1e-9)
+    digt = blocks * dig_time(best_row, drill)
+    travel = 2 * (best_row / engine)
+    trip_time = digt + travel + 20
+    income = v * blocks - (travel * FUEL_FLY + digt * FUEL_IDLE) * FUEL_PRICE
+    return income / (trip_time / 60), best_row
+
+
+def nice(x):
+    """auf 2 signifikante Stellen runden (kaufmännisch hübsch)."""
+    import math
+    if x <= 0:
+        return 0
+    mag = 10 ** (math.floor(math.log10(x)) - 1)
+    return int(round(x / mag) * mag)
+
+
+def calibrate():
+    """Ring-Zeit-Ziele -> Kostentabelle. Ring L = alle 4 Kategorien auf Tier L
+    kaufen. Sim spielt ~2.5x schneller als echte Spieler (perfektes Spiel)."""
+    RING_MINUTES = {2: 8, 3: 15, 4: 30, 5: 50, 6: 80, 7: 110}  # Sim-Minuten
+    cats = 4
+    proposed = {c: [] for c in UPGRADES}
+    print(f"{'Ring':>4} {'Row':>5} {'$/min':>9}  Kosten/Kategorie")
+    for L in range(2, 8):
+        tiers = {c: min(L - 1, len(UPGRADES[c][1])) for c in UPGRADES}
+        ipm, row = trip_stats(tiers)
+        cost = nice(RING_MINUTES[L] / cats * ipm)
+        print(f"{L:>4} {row:>5} {ipm:>9.0f}  ${cost}")
+        for c in UPGRADES:
+            if L <= len(UPGRADES[c][1]):
+                proposed[c].append(cost)
+    print("\nVorgeschlagene Kostenleiter (alle Kategorien):")
+    print("  " + " / ".join(f"${c}" for c in proposed["Drill"]))
+    # Verifikation: Sim mit neuen Kosten
+    for c in UPGRADES:
+        costs, effects = UPGRADES[c]
+        UPGRADES[c] = (proposed[c][:len(costs)], effects)
+    print("\n=== Verifikations-Lauf mit kalibrierten Kosten ===")
+    simulate(24)
+
+
 if __name__ == "__main__":
-    hours = float(sys.argv[1]) if len(sys.argv) > 1 else 12
-    simulate(hours)
+    if len(sys.argv) > 1 and sys.argv[1] == "calibrate":
+        calibrate()
+    else:
+        hours = float(sys.argv[1]) if len(sys.argv) > 1 else 12
+        simulate(hours)
